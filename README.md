@@ -4,7 +4,7 @@ This is the fan engagement app created with Laravel and React using an API-based
 
 ## Installation
 
-For the API installation go to the `chatter-api` folder for the installation guide and API documentation, for the app installation go to the `fan-engagement-dashboard` folder or the React app installation guide.
+For the API installation go to the [chatter-api](https://github.com/Morty-lab/Fan-Engagement-Dashboard/tree/main/chatter-api) folder for the installation guide and API documentation, for the app installation go to the [fan-engagement-dashboard](https://github.com/Morty-lab/Fan-Engagement-Dashboard/tree/main/fan-engagement-dashboard) folder.
 
 ## Technologies and Rationale
 
