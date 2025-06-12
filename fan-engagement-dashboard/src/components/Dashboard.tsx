@@ -1,39 +1,88 @@
-import React from 'react';
-import { 
-  Box, 
-  Paper, 
-  Container, 
-  CssBaseline,
-  ThemeProvider,
-  createTheme,
-  responsiveFontSizes
-} from '@mui/material';
+import React, { useState } from 'react';
+import FanSideBar from './dashboard/FanSideBar';
+import api from '../api/client';
 
-const mdTheme = responsiveFontSizes(
-  createTheme({
-    palette: {
-      mode: 'dark',
-    },
-  })
-);
-
-interface DashboardProps {
-  children: React.ReactNode;
+interface Message {
+  id: number;
+  conversation_id: number;
+  sender: 'fan' | 'chatter';
+  content: string;
+  created_at: string;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ children }) => {
+const Dashboard: React.FC = () => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [selectedConversationId, setSelectedConversationId] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleConversationClick = async (conversationId: number) => {
+    setSelectedConversationId(conversationId);
+    setIsLoading(true);
+    try {
+      const res = await api.get(`/conversation/${conversationId}`);
+      console.log(res.data);
+      setMessages(res.data.messages);
+    } catch (err) {
+      console.error("Failed to load conversation messages", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <ThemeProvider theme={mdTheme}>
-      <CssBaseline />
-      <Box sx={{ display: 'flex' }}>
-        <Container maxWidth="xl">
-          <Paper elevation={3}>
-            {children}
-          </Paper>
-        </Container>
-      </Box>
-    </ThemeProvider>
+    <div className="flex w-screen h-screen overflow-hidden bg-gray-900 text-white">
+      {/* Sidebar */}
+      <div className="w-[20%] bg-gray-800 border-r border-gray-700 h-full overflow-y-auto">
+        <FanSideBar onConversationClick={handleConversationClick} />
+      </div>
+
+      {/* Main Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Chat messages */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {isLoading ? (
+            <div className="text-center text-gray-400">
+              Loading messages...
+            </div>
+          ) : selectedConversationId ? (
+            messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`max-w-md p-3 rounded-lg ${
+                  msg.sender === 'fan' ? 'bg-gray-700 self-start' : 'bg-blue-600 self-end'
+                }`}
+              >
+                <p>{msg.content}</p>
+                <p className="text-xs text-gray-300 mt-1">{new Date(msg.created_at).toLocaleString()}</p>
+              </div>
+            ))
+          ) : (
+            <div className="text-center text-gray-400">
+              Select a conversation to start chatting
+            </div>
+          )}
+        </div>
+
+        {/* Textbox */}
+        <div className="h-[10vh] border-t border-gray-700 p-4">
+          <form className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Type your message..."
+              className="flex-1 px-4 py-2 bg-gray-800 text-white rounded-lg focus:outline-none"
+            />
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg"
+            >
+              Send
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
   );
 };
 
 export default Dashboard;
+
