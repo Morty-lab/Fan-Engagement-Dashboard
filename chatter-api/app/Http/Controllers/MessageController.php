@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MessageSent;
 use App\Models\Message;
 use Illuminate\Http\Request;
 
@@ -37,6 +38,7 @@ class MessageController extends Controller
                 'sender' => $request->input('sender'),
                 'content' => $request->input('content')
             ]);
+            event(new MessageSent($message));
             return response()->json($message);
         } catch (\Exception $e) {
             return response('Error creating message: ' . $e->getMessage(), 500);

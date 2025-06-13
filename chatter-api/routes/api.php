@@ -5,6 +5,8 @@ use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\FanController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\TemplateController;
+use App\Models\Message;
+use App\Events\MessageSent;
 
 //conversation routes
 Route::get('/conversations', [ConversationController::class, 'index']);
@@ -23,3 +25,13 @@ Route::get('/templates', [TemplateController::class, 'index']);
 Route::post('/template', [TemplateController::class, 'store']);
 Route::put('/template/{id}', [TemplateController::class, 'update']);
 Route::delete('/template/{id}', [TemplateController::class, 'delete']);
+
+
+Route::get('/broadcast-test', function () {
+     $message = Message::first();
+    if (!$message) {
+        return 'No message found';
+    }
+    event(new MessageSent($message));
+    return 'Event broadcasted';
+});
