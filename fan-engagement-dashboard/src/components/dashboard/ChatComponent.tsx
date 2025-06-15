@@ -27,10 +27,14 @@ interface ChatComponentProps {
   isDarkMode: boolean;
   updateConversationLastMessage: (conversationId: number, lastMessage: string) => void;
   updateConversationUnreadCount: (conversationId: number, increment?: boolean) => void;
-  onOpenMobileSidebar?: () => void; // New prop to handle opening mobile sidebar
+  onOpenMobileSidebar?: () => void;
 }
 
 const MESSAGES_PER_PAGE = 25;
+
+// GroqCloud AI Configuration
+const GROQ_API_KEY = "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";
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 const ChatComponent: React.FC<ChatComponentProps> = ({
   selectedConversationId,
@@ -38,7 +42,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   isDarkMode,
   updateConversationLastMessage,
   updateConversationUnreadCount,
-  onOpenMobileSidebar, // New prop
+  onOpenMobileSidebar,
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -49,10 +53,73 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
   const [showFanInfo, setShowFanInfo] = useState(false);
   const [fanInfo, setFanInfo] = useState<FanInfo | null>(null);
   const [isLoadingFanInfo, setIsLoadingFanInfo] = useState(false);
+  const [aiGeneratingFor, setAiGeneratingFor] = useState<number | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const previousMessagesLength = useRef<number>(0);
+
+  // GroqCloud AI Reply Generator
+  const generateAIReply = async (fanMessage: string, messageId: number) => {
+    setAiGeneratingFor(messageId);
+    
+    try {
+      const fanName = getSelectedFanName();
+      const context = messages.slice(-5).map(msg => 
+        `${msg.sender === 'fan' ? fanName : 'You'}: ${msg.content}`
+      ).join('\n');
+
+      const prompt = `You are a professional content creator responding to a fan message. Be friendly, engaging, and personalized. Keep responses concise but warm.
+
+Context of recent conversation:
+${context}
+
+Fan's latest message: "${fanMessage}"
+
+Generate a friendly, personalized response that acknowledges their message and keeps the conversation engaging. Avoid being overly promotional or salesy.`;
+
+      const response = await fetch(GROQ_API_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${GROQ_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'llama3-8b-8192', // You can change this to other Groq models
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a helpful assistant that generates friendly, engaging responses for content creators to their fans. Keep responses personal, warm, and conversational.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: 150,
+          temperature: 0.7,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const aiReply = data.choices[0]?.message?.content?.trim();
+      
+      if (aiReply) {
+        setNewMessage(aiReply);
+      } else {
+        throw new Error('No response generated');
+      }
+    } catch (error) {
+      console.error('AI Reply generation failed:', error);
+      alert('Failed to generate AI reply. Please check your API key and try again.');
+    } finally {
+      setAiGeneratingFor(null);
+    }
+  };
 
   // Check if user is near bottom of chat
   const isNearBottom = useCallback(() => {
@@ -530,33 +597,92 @@ const ChatComponent: React.FC<ChatComponentProps> = ({
                     msg.sender === "fan" ? "justify-start" : "justify-end"
                   }`}
                 >
-                  <div
-                    className={`max-w-md p-3 rounded-lg transition-colors duration-200 ${
-                      msg.sender === "fan"
-                        ? isDarkMode
-                          ? "bg-gray-700"
-                          : "bg-gray-200"
-                        : "bg-blue-600"
-                    }`}
-                  >
-                    <p
-                      className={
-                        msg.sender === "fan" && !isDarkMode
-                          ? "text-gray-900"
-                          : "text-white"
-                      }
-                    >
-                      {msg.content}
-                    </p>
-                    <p
-                      className={`text-xs mt-1 ${
-                        msg.sender === "fan" && !isDarkMode
-                          ? "text-gray-600"
-                          : "text-gray-300"
+                  <div className="flex flex-col max-w-md">
+                    <div
+                      className={`p-3 rounded-lg transition-colors duration-200 ${
+                        msg.sender === "fan"
+                          ? isDarkMode
+                            ? "bg-gray-700"
+                            : "bg-gray-200"
+                          : "bg-blue-600"
                       }`}
                     >
-                      {new Date(msg.created_at).toLocaleString()}
-                    </p>
+                      <p
+                        className={
+                          msg.sender === "fan" && !isDarkMode
+                            ? "text-gray-900"
+                            : "text-white"
+                        }
+                      >
+                        {msg.content}
+                      </p>
+                      <p
+                        className={`text-xs mt-1 ${
+                          msg.sender === "fan" && !isDarkMode
+                            ? "text-gray-600"
+                            : "text-gray-300"
+                        }`}
+                      >
+                        {new Date(msg.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                    
+                    {/* AI Reply Button - Only for fan messages */}
+                    {msg.sender === "fan" && (
+                      <button
+                        onClick={() => generateAIReply(msg.content, msg.id)}
+                        disabled={aiGeneratingFor === msg.id}
+                        className={`mt-2 px-3 py-1 text-xs rounded-full border transition-all duration-200 flex items-center gap-1 self-start ${
+                          isDarkMode
+                            ? "border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500"
+                            : "border-gray-300 text-gray-600 hover:bg-gray-100 hover:border-gray-400"
+                        } ${aiGeneratingFor === msg.id ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'}`}
+                        title="Generate AI reply suggestion"
+                      >
+                        {aiGeneratingFor === msg.id ? (
+                          <>
+                            <svg
+                              className="animate-spin h-3 w-3"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
+                            </svg>
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <svg
+                              className="h-3 w-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                              />
+                            </svg>
+                            Reply with AI
+                          </>
+                        )}
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
