@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Search, Moon, Sun } from "lucide-react";
+import { Search, Moon, Sun, BarChart3 } from "lucide-react";
 import ConversationComponent from "../messages/ConversationComponent";
 
 interface Conversation {
@@ -18,6 +18,8 @@ interface FanSideBarProps {
   setIsDarkMode: React.Dispatch<React.SetStateAction<boolean>>;
   onPriorityChange?: (conversationId: number, newPriority: number) => void;
   onMarkAsRead?: (conversationId: number) => void;
+  showAnalytics: boolean;
+  onToggleAnalytics: () => void;
 }
 
 const FanSideBar: React.FC<FanSideBarProps> = ({ 
@@ -27,7 +29,9 @@ const FanSideBar: React.FC<FanSideBarProps> = ({
   isDarkMode, 
   setIsDarkMode,
   onPriorityChange,
-  onMarkAsRead
+  onMarkAsRead,
+  showAnalytics,
+  onToggleAnalytics
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -62,20 +66,51 @@ const FanSideBar: React.FC<FanSideBarProps> = ({
         }`}>
           Fan Engagement Dashboard
         </h1>
-        <button
-          onClick={() => setIsDarkMode(!isDarkMode)}
-          className={`p-2 rounded transition-colors duration-200 ${
-            isDarkMode 
-              ? "hover:bg-gray-700" 
-              : "hover:bg-gray-200"
-          }`}
-        >
-          {isDarkMode ? (
-            <Sun className="h-5 w-5 text-yellow-400" />
-          ) : (
-            <Moon className="h-5 w-5 text-gray-700" />
-          )}
-        </button>
+        <div className="flex items-center space-x-2">
+          {/* Analytics Toggle Button */}
+          <button
+            onClick={onToggleAnalytics}
+            title="Analytics"
+            className={`p-2 rounded transition-colors duration-200 ${
+              isDarkMode 
+                ? "hover:bg-gray-700" 
+                : "hover:bg-gray-200"
+            } ${
+              showAnalytics 
+                ? isDarkMode 
+                  ? "bg-gray-700 text-blue-400" 
+                  : "bg-gray-200 text-blue-600"
+                : ""
+            }`}
+          >
+            <BarChart3 className={`h-5 w-5 ${
+              showAnalytics 
+                ? isDarkMode 
+                  ? "text-blue-400" 
+                  : "text-blue-600"
+                : isDarkMode 
+                  ? "text-gray-400" 
+                  : "text-gray-600"
+            }`} />
+          </button>
+          
+          {/* Dark Mode Toggle Button */}
+          <button
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            title={isDarkMode ? "Light Mode" : "Dark Mode"}
+            className={`p-2 rounded transition-colors duration-200 ${
+              isDarkMode 
+                ? "hover:bg-gray-700" 
+                : "hover:bg-gray-200"
+            }`}
+          >
+            {isDarkMode ? (
+              <Sun className="h-5 w-5 text-yellow-400" />
+            ) : (
+              <Moon className="h-5 w-5 text-gray-700" />
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Search */}

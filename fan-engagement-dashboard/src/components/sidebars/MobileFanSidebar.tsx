@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Search, X, Moon, Sun } from "lucide-react";
+import { Search, X, Moon, Sun, BarChart3 } from "lucide-react";
 import ConversationComponent from "../messages/ConversationComponent";
 
 interface Conversation {
@@ -20,6 +20,8 @@ interface Props {
   setIsDarkMode: React.Dispatch<React.SetStateAction<boolean>>;
   onPriorityChange?: (conversationId: number, newPriority: number) => void;
   onMarkAsRead?: (conversationId: number) => void;
+  showAnalytics: boolean;
+  onToggleAnalytics: () => void;
 }
 
 const MobileFanSidebar: React.FC<Props> = ({
@@ -32,6 +34,8 @@ const MobileFanSidebar: React.FC<Props> = ({
   setIsDarkMode,
   onPriorityChange,
   onMarkAsRead,
+  showAnalytics,
+  onToggleAnalytics,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -56,6 +60,11 @@ const MobileFanSidebar: React.FC<Props> = ({
     onConversationClick(conversationId);
   };
 
+  const handleAnalyticsToggle = () => {
+    onToggleAnalytics();
+    onClose(); // Close sidebar after toggling analytics
+  };
+
   return (
     <div
       className={`fixed top-0 left-0 w-full h-full z-50 transform transition-all duration-300 block md:hidden flex flex-col ${
@@ -74,9 +83,37 @@ const MobileFanSidebar: React.FC<Props> = ({
       }`}>
         <h2 className="text-lg font-bold">Conversations</h2>
         <div className="flex items-center space-x-2">
+          {/* Analytics toggle */}
+          <button
+            onClick={handleAnalyticsToggle}
+            title="Analytics"
+            className={`p-2 rounded transition-colors duration-200 ${
+              isDarkMode 
+                ? "hover:bg-gray-700" 
+                : "hover:bg-gray-200"
+            } ${
+              showAnalytics 
+                ? isDarkMode 
+                  ? "bg-gray-700 text-blue-400" 
+                  : "bg-gray-200 text-blue-600"
+                : ""
+            }`}
+          >
+            <BarChart3 className={`h-5 w-5 ${
+              showAnalytics 
+                ? isDarkMode 
+                  ? "text-blue-400" 
+                  : "text-blue-600"
+                : isDarkMode 
+                  ? "text-gray-400" 
+                  : "text-gray-600"
+            }`} />
+          </button>
+          
           {/* Dark mode toggle */}
           <button
             onClick={() => setIsDarkMode(!isDarkMode)}
+            title={isDarkMode ? "Light Mode" : "Dark Mode"}
             className={`p-2 rounded transition-colors duration-200 ${
               isDarkMode 
                 ? "hover:bg-gray-700" 
@@ -89,6 +126,7 @@ const MobileFanSidebar: React.FC<Props> = ({
               <Moon className="h-5 w-5 text-gray-700" />
             )}
           </button>
+          
           {/* Close button */}
           <button onClick={onClose}>
             <X className={`h-6 w-6 ${
