@@ -38,13 +38,7 @@ A modern web application for managing fan conversations and engagement, built as
    npm install
    ```
 
-3. **Environment setup**
-   ```bash
-   cp .env.example .env
-   # Configure your environment variables
-   ```
-
-4. **Start the development server**
+3. **Start the development server**
    ```bash
    npm run dev
    ```
