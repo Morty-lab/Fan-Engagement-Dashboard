@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->foreignId('conversation_id')->constrained()->onDelete('cascade');
             $table->enum('sender', ['fan', 'chatter']);
             $table->text('content');
+            $table->boolean('is_read')->default(false);
             $table->timestamps();
         });
 

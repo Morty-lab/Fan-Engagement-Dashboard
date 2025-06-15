@@ -13,6 +13,8 @@ return new class extends Migration {
         Schema::create('conversations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('fan_id')->constrained()->onDelete('cascade');
+            $table->string('last_message')->nullable();
+            $table->integer('priority_level')->default(0);
             $table->timestamps();
         });
 

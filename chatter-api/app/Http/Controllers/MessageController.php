@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\MessageSent;
+use App\Models\Conversation;
 use App\Models\Message;
 use Illuminate\Http\Request;
 
@@ -32,12 +33,16 @@ class MessageController extends Controller
 
     public function store(Request $request)
     {
+        $conversation_id = $request->input('conversation_id');
+        $conversation = Conversation::find($conversation_id);
         try {
             $message = Message::create([
-                'conversation_id' => $request->input('conversation_id'),
+                'conversation_id' => $conversation_id,
                 'sender' => $request->input('sender'),
                 'content' => $request->input('content')
             ]);
+            $conversation->last_message = $message->content;
+            $conversation->save();
             event(new MessageSent($message));
             return response()->json($message);
         } catch (\Exception $e) {

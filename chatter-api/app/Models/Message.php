@@ -13,6 +13,7 @@ class Message extends Model
         'conversation_id',
         'sender',
         'content',
+        'is_read',
     ];
 
 }

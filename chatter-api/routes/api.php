@@ -11,6 +11,9 @@ use App\Events\MessageSent;
 //conversation routes
 Route::get('/conversations', [ConversationController::class, 'index']);
 Route::get('/conversation/{id}', [ConversationController::class, 'show']);
+Route::post('/conversation/{id}/mark-read', [ConversationController::class, 'markAsRead']);
+Route::put('/conversation/{id}/priority', [ConversationController::class, 'setPriority']);
+
 
 //fan routes
 Route::get('/fan/{id}', [FanController::class, 'show']);

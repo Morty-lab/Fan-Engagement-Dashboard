@@ -1,8 +1,5 @@
-// src/components/sidebars/MobileFanSidebar.tsx
-
-import React, { useEffect, useState, useRef } from "react";
+import React, { useState } from "react";
 import { Search, X, Moon, Sun } from "lucide-react";
-import api from "../../api/client";
 import ConversationComponent from "../messages/ConversationComponent";
 
 interface Conversation {
@@ -14,80 +11,50 @@ interface Conversation {
 }
 
 interface Props {
+  conversations: Conversation[];
   isOpen: boolean;
   onClose: () => void;
   onConversationClick: (conversationId: number) => void;
+  selectedConversationId?: number | null;
   isDarkMode: boolean;
   setIsDarkMode: React.Dispatch<React.SetStateAction<boolean>>;
+  onPriorityChange?: (conversationId: number, newPriority: number) => void;
+  onMarkAsRead?: (conversationId: number) => void;
 }
 
 const MobileFanSidebar: React.FC<Props> = ({
+  conversations,
   isOpen,
   onClose,
   onConversationClick,
+  selectedConversationId,
   isDarkMode,
   setIsDarkMode,
+  onPriorityChange,
+  onMarkAsRead,
 }) => {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Cache flag to avoid reloading data
-  const hasLoadedRef = useRef(false);
-
-  useEffect(() => {
-    if (isOpen && !hasLoadedRef.current) {
-      loadConversations();
-    }
-  }, [isOpen]);
-
-  const loadConversations = async () => {
-    setIsLoading(true);
-    try {
-      const conversationRes = await api.get("/conversations");
-      const conversationList = conversationRes.data;
-
-      const enrichedConversations = await Promise.all(
-        conversationList.map(async (conv: any) => {
-          try {
-            const fanRes = await api.get(`/fan/${conv.fan_id}`);
-            const fanData = fanRes.data;
-
-            return {
-              id: conv.id,
-              fanName: fanData.display_name || fanData.username,
-              lastMessage: "shamalama", // Replace with actual message logic if needed
-              priorityLevel: 3, // Replace with actual logic if needed
-              unreadCount: 4, // Replace with actual logic if needed
-            };
-          } catch (error) {
-            console.error(
-              `Error loading fan info for fan_id ${conv.fan_id}`,
-              error
-            );
-            return {
-              id: conv.id,
-              fanName: "Unknown",
-              lastMessage: "",
-              priorityLevel: 0,
-              unreadCount: 0,
-            };
-          }
-        })
-      );
-
-      setConversations(enrichedConversations);
-      hasLoadedRef.current = true;
-    } catch (error) {
-      console.error("Error loading conversations:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const filteredConversations = conversations.filter((c) =>
     c.fanName.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Sort conversations by priority level only (1 = high, 2 = medium, 3 = low, 0 = none)
+  const sortedConversations = filteredConversations.sort((a, b) => {
+    if (a.priorityLevel !== b.priorityLevel) {
+      if (a.priorityLevel === 0) return 1; // Move 0 to end
+      if (b.priorityLevel === 0) return -1; // Move 0 to end
+      return a.priorityLevel - b.priorityLevel; // Lower number = higher priority
+    }
+    
+    // Maintain original order if priority levels are equal
+    return 0;
+  });
+
+  const handleConversationClick = (conversationId: number) => {
+    onClose();
+    onConversationClick(conversationId);
+  };
 
   return (
     <div
@@ -152,25 +119,25 @@ const MobileFanSidebar: React.FC<Props> = ({
       </div>
 
       {/* Conversation list */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4">
-        {isLoading ? (
+      <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
+        {conversations.length === 0 ? (
           <div className={`p-4 text-center transition-colors duration-200 ${
             isDarkMode 
               ? "text-gray-300" 
               : "text-gray-600"
           }`}>
-            Loading conversations...
+            No conversations available
           </div>
         ) : (
-          filteredConversations.map((conversation) => (
+          sortedConversations.map((conversation) => (
             <ConversationComponent
               key={conversation.id}
               conversation={conversation}
-              onClick={() => {
-                onClose();
-                onConversationClick(conversation.id);
-              }}
+              onClick={() => handleConversationClick(conversation.id)}
+              isActive={selectedConversationId === conversation.id}
               isDarkMode={isDarkMode}
+              onPriorityChange={onPriorityChange}
+              onMarkAsRead={onMarkAsRead}
             />
           ))
         )}

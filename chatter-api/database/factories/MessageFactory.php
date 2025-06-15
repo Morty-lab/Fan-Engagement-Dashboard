@@ -21,6 +21,7 @@ class MessageFactory extends Factory
             'conversation_id' => Conversation::factory(),
             'sender' => $this->faker->randomElement(['fan', 'chatter']),
             'content' => $this->faker->text(),
+            'is_read' => $this->faker->boolean(),
             'created_at' => $this->faker->dateTimeBetween('-7 days', 'now'),
             'updated_at' => now(),
         ];

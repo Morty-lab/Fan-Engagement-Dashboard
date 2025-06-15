@@ -12,6 +12,8 @@ class Conversation extends Model
 
     protected $fillable = [
         'fan_id',
+        'last_message',
+        'priority_level'
     ];
 
 }
