@@ -7,9 +7,11 @@ interface Conversation {
   priorityLevel: number;
   unreadCount: number;
 }
+
 interface Props {
   conversation: Conversation;
   onClick?: () => void;
+  isDarkMode?: boolean;
 }
 
 const getPriorityColor = (priorityLevel: number): string => {
@@ -25,19 +27,35 @@ const getPriorityColor = (priorityLevel: number): string => {
   }
 };
 
-const ConversationComponent: React.FC<Props> = ({ conversation, onClick }) => {
+const ConversationComponent: React.FC<Props> = ({ 
+  conversation, 
+  onClick, 
+  isDarkMode = false 
+}) => {
   return (
     <div
       key={conversation.id}
-      className="w-full bg-white dark:bg-gray-800 p-4 rounded-lg  cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition"
+      className={`w-full p-4 rounded-lg cursor-pointer transition-colors duration-200 ${
+        isDarkMode 
+          ? "bg-gray-800 hover:bg-gray-700" 
+          : "bg-white hover:bg-gray-100"
+      }`}
       onClick={onClick}
     >
       <div className="flex justify-between items-start">
         <div>
-          <h3 className="font-semibold text-gray-900 dark:text-white">
+          <h3 className={`font-semibold transition-colors duration-200 ${
+            isDarkMode 
+              ? "text-white" 
+              : "text-gray-900"
+          }`}>
             {conversation.fanName}
           </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+          <p className={`text-sm line-clamp-2 transition-colors duration-200 ${
+            isDarkMode 
+              ? "text-gray-300" 
+              : "text-gray-600"
+          }`}>
             {conversation.lastMessage}
           </p>
         </div>

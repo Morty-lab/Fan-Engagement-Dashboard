@@ -24,6 +24,7 @@ const Dashboard: React.FC = () => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true); // Added dark mode state, defaulting to true since original design was dark
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -127,19 +128,39 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="flex w-screen h-screen overflow-hidden bg-gray-900 text-white">
+    <div className={`flex w-screen h-screen overflow-hidden transition-colors duration-200 ${
+      isDarkMode 
+        ? "bg-gray-900 text-white" 
+        : "bg-gray-50 text-gray-900"
+    }`}>
       {/* Sidebar */}
-      <div className="w-[20%] bg-gray-800 border-r border-gray-700 h-full overflow-y-auto hidden md:block">
-        <FanSideBar onConversationClick={handleConversationClick} />
+      <div className={`w-[20%] border-r h-full overflow-y-auto hidden md:block transition-colors duration-200 ${
+        isDarkMode 
+          ? "bg-gray-800 border-gray-700" 
+          : "bg-white border-gray-200"
+      }`}>
+        <FanSideBar 
+          onConversationClick={handleConversationClick}
+          isDarkMode={isDarkMode}
+          setIsDarkMode={setIsDarkMode}
+        />
       </div>
 
       {/* Main Area */}
       <div className="flex-1 flex flex-col">
         {/* Toggle sidebar button */}
-        <header className="md:hidden flex items-center justify-between py-2 border-b border-gray-700">
+        <header className={`md:hidden flex items-center justify-between py-2 border-b transition-colors duration-200 ${
+          isDarkMode 
+            ? "border-gray-700" 
+            : "border-gray-200"
+        }`}>
           <button
             type="button"
-            className="bg-gray-700 rounded-full p-2 focus:outline-none"
+            className={`rounded-full p-2 focus:outline-none transition-colors duration-200 ${
+              isDarkMode 
+                ? "bg-gray-700 hover:bg-gray-600" 
+                : "bg-gray-200 hover:bg-gray-300"
+            }`}
             onClick={() => setShowMobileSidebar(true)}
           >
             <svg
@@ -168,6 +189,8 @@ const Dashboard: React.FC = () => {
           isOpen={showMobileSidebar}
           onClose={() => setShowMobileSidebar(false)}
           onConversationClick={handleConversationClick}
+          isDarkMode={isDarkMode}
+          setIsDarkMode={setIsDarkMode}
         />
 
         {/* Chat messages */}
@@ -178,9 +201,13 @@ const Dashboard: React.FC = () => {
         >
           {/* Load more indicator */}
           {isLoadingMore && (
-            <div className="text-center text-gray-400 py-2">
+            <div className={`text-center py-2 ${
+              isDarkMode ? "text-gray-400" : "text-gray-600"
+            }`}>
               <div className="inline-flex items-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg className={`animate-spin -ml-1 mr-3 h-5 w-5 ${
+                  isDarkMode ? "text-gray-400" : "text-gray-600"
+                }`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -191,13 +218,17 @@ const Dashboard: React.FC = () => {
 
           {/* No more messages indicator */}
           {!hasMoreMessages && messages.length > 0 && (
-            <div className="text-center text-gray-500 text-sm py-2">
+            <div className={`text-center text-sm py-2 ${
+              isDarkMode ? "text-gray-500" : "text-gray-400"
+            }`}>
               No more messages
             </div>
           )}
 
           {isLoading ? (
-            <div className="text-center text-gray-400">Loading messages...</div>
+            <div className={`text-center ${
+              isDarkMode ? "text-gray-400" : "text-gray-600"
+            }`}>Loading messages...</div>
           ) : selectedConversationId ? (
             <>
               {messages.map((msg) => (
@@ -206,14 +237,24 @@ const Dashboard: React.FC = () => {
                   className={`flex ${msg.sender === "fan" ? "justify-start" : "justify-end"}`}
                 >
                   <div
-                    className={`max-w-md p-3 rounded-lg ${
+                    className={`max-w-md p-3 rounded-lg transition-colors duration-200 ${
                       msg.sender === "fan"
-                        ? "bg-gray-700"
+                        ? isDarkMode 
+                          ? "bg-gray-700" 
+                          : "bg-gray-200"
                         : "bg-blue-600"
                     }`}
                   >
-                    <p>{msg.content}</p>
-                    <p className="text-xs text-gray-300 mt-1">
+                    <p className={
+                      msg.sender === "fan" && !isDarkMode 
+                        ? "text-gray-900" 
+                        : "text-white"
+                    }>{msg.content}</p>
+                    <p className={`text-xs mt-1 ${
+                      msg.sender === "fan" && !isDarkMode 
+                        ? "text-gray-600" 
+                        : "text-gray-300"
+                    }`}>
                       {new Date(msg.created_at).toLocaleString()}
                     </p>
                   </div>
@@ -223,7 +264,9 @@ const Dashboard: React.FC = () => {
               <div ref={messagesEndRef} />
             </>
           ) : (
-            <div className="text-center text-gray-400">
+            <div className={`text-center ${
+              isDarkMode ? "text-gray-400" : "text-gray-600"
+            }`}>
               Select a conversation to start chatting
             </div>
           )}
@@ -231,7 +274,11 @@ const Dashboard: React.FC = () => {
 
         {/* Textbox */}
         {selectedConversationId && (
-          <div className="h-[10vh] border-t border-gray-700 p-4">
+          <div className={`h-[10vh] border-t p-4 transition-colors duration-200 ${
+            isDarkMode 
+              ? "border-gray-700" 
+              : "border-gray-200"
+          }`}>
             <form
               className="flex gap-2"
               onSubmit={async (e) => {
@@ -263,7 +310,11 @@ const Dashboard: React.FC = () => {
                     e.currentTarget.form?.requestSubmit();
                   }
                 }}
-                className="flex-1 px-4 py-2 bg-gray-800 text-white rounded-lg focus:outline-none resize-none"
+                className={`flex-1 px-4 py-2 rounded-lg focus:outline-none resize-none transition-colors duration-200 ${
+                  isDarkMode 
+                    ? "bg-gray-800 text-white border-gray-600 focus:border-blue-500" 
+                    : "bg-white text-gray-900 border-gray-300 focus:border-blue-500 border"
+                }`}
                 rows={2}
               />
               <button
